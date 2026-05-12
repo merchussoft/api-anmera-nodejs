@@ -1,0 +1,24 @@
+Users in DB (first 5): [
+  {
+    "id": "72b69df1-cc97-4441-9cc6-ba50ebd95404",
+    "name": "Admin",
+    "email": "admin@anmerastore.com",
+    "password": "$2a$10$l8XKRH02dfCNTLc88n6fUOfyy05FCt86.RpW.ux4vOlMurkLdTmKK",
+    "role": "ADMIN",
+    "isActive": true,
+    "remember_token": null,
+    "created_at": null,
+    "updated_at": "2026-03-21T01:17:42.000Z"
+  },
+  {
+    "id": "9b4e086c-8d8e-43ef-89db-59e7ab5baf03",
+    "name": "Delivery",
+    "email": "delivery@anmerastore.com",
+    "password": "$2a$10$a0lrECWzHSn1DF6yThbxb.7geJcy9kLPxb47TgWc6Yi14SgZ7pJR.",
+    "role": "DELIVERY",
+    "isActive": true,
+    "remember_token": null,
+    "created_at": null,
+    "updated_at": "2026-03-21T01:17:42.000Z"
+  }
+]

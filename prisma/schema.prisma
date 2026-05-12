@@ -1,0 +1,329 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id             String    @id @default(uuid()) @db.Char(36)
+  name           String    @db.VarChar(255)
+  email          String    @unique(map: "users_email_unique") @db.VarChar(255)
+  password       String    @db.VarChar(255)
+  role           String    @default("STAFF") @db.VarChar(255)
+  isActive       Boolean   @default(true)
+  remember_token String?   @db.VarChar(100)
+  created_at     DateTime? @db.Timestamp(0)
+  updated_at     DateTime? @updatedAt @db.Timestamp(0)
+
+  @@map("users")
+  deliveries     Order[]
+}
+
+model SystemLog {
+  id         String    @id @default(uuid()) @db.Char(36)
+  level      String    @db.VarChar(255)
+  action     String?   @db.VarChar(255)
+  message    String    @db.Text
+  metadata   Json?
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+
+  @@map("system_logs")
+}
+
+model Category {
+  id          String    @id @default(uuid()) @db.Char(36)
+  name        String    @db.VarChar(255)
+  slug        String    @unique(map: "categories_slug_unique") @db.VarChar(255)
+  description String?   @db.Text
+  isActive    Boolean   @default(true)
+  created_at  DateTime? @db.Timestamp(0)
+  updated_at  DateTime? @updatedAt @db.Timestamp(0)
+  products    Product[]
+
+  @@index([isActive], map: "categories_isactive_index")
+  @@index([name], map: "categories_name_index")
+  @@map("categories")
+}
+
+model Product {
+  id            String    @id @default(uuid()) @db.Char(36)
+  name          String    @db.VarChar(255)
+  description   String?   @db.Text
+  reference     String?   @unique(map: "products_reference_unique") @db.VarChar(255)
+  barcode       String?   @unique(map: "products_barcode_unique") @db.VarChar(255)
+  price         Decimal   @db.Decimal(10, 2)
+  originalPrice Decimal?  @db.Decimal(10, 2)
+  discount      Decimal   @default(0.00) @db.Decimal(5, 2)
+  images        Json?
+  sizes         Json?
+  stock         Int       @default(0)
+  gender        String?   @db.VarChar(255)
+  isActive      Boolean   @default(true)
+  featured      Boolean   @default(false)
+  categoryId    String?   @db.Char(36)
+  created_at    DateTime? @db.Timestamp(0)
+  updated_at    DateTime? @updatedAt @db.Timestamp(0)
+  category      Category? @relation(fields: [categoryId], references: [id], map: "products_categoryid_foreign")
+  orderItems    OrderItem[]
+  product_colors product_colors[]
+
+  @@index([categoryId], map: "products_categoryid_foreign")
+  @@map("products")
+}
+
+model Order {
+  id               String    @id @default(uuid()) @db.Char(36)
+  invoiceNumber    String?   @unique(map: "orders_invoicenumber_unique") @db.VarChar(255)
+  customerId       String    @db.Char(36)
+  subtotal         Decimal   @db.Decimal(10, 2)
+  shippingCost     Decimal   @default(0.00) @db.Decimal(10, 2)
+  total            Decimal   @db.Decimal(10, 2)
+  status           String    @default("PENDING") @db.VarChar(255)
+  paymentMethod    String?   @db.VarChar(255)
+  paymentStatus    String    @default("PENDING") @db.VarChar(255)
+  deliveryPersonId     String?              @db.Char(36)
+  shippingName         String?              @db.VarChar(255) @map("shipping_name")
+  shippingPhone        String?              @db.VarChar(255) @map("shipping_phone")
+  shippingStreet       String?              @db.VarChar(255) @map("shipping_street")
+  shippingNeighborhood String?              @db.VarChar(255) @map("shipping_neighborhood")
+  shippingCity         String?              @db.VarChar(255) @map("shipping_city")
+  shippingDepartment   String?              @db.VarChar(255) @map("shipping_department")
+  created_at           DateTime?            @db.Timestamp(0)
+  updated_at           DateTime?            @updatedAt @db.Timestamp(0)
+  customer         customers @relation(fields: [customerId], references: [id], map: "orders_customerid_foreign")
+  deliveryPerson   Users?    @relation(fields: [deliveryPersonId], references: [id], map: "orders_deliverypersonid_foreign")
+  items            OrderItem[]
+  payments         Payment[]
+  delivery_evidences delivery_evidences[]
+
+  @@index([customerId], map: "orders_customerid_foreign")
+  @@index([deliveryPersonId], map: "orders_deliverypersonid_foreign")
+  @@index([status], map: "orders_status_index")
+  @@map("orders")
+}
+
+model OrderItem {
+  id               String    @id @default(uuid()) @db.Char(36)
+  orderId          String    @db.Char(36)
+  productId        String    @db.Char(36)
+  productName      String    @db.VarChar(255)
+  productReference String?   @db.VarChar(255)
+  productImage     String?   @db.VarChar(255)
+  price            Decimal   @db.Decimal(10, 2)
+  quantity         Int       @db.UnsignedInt
+  color            String?   @db.VarChar(255)
+  size             String?   @db.VarChar(255)
+  created_at       DateTime? @db.Timestamp(0)
+  updated_at       DateTime? @db.Timestamp(0)
+  order            Order     @relation(fields: [orderId], references: [id], map: "order_items_orderid_foreign")
+  product          Product   @relation(fields: [productId], references: [id], map: "order_items_productid_foreign")
+
+  @@index([orderId], map: "order_items_orderid_foreign")
+  @@index([productId], map: "order_items_productid_foreign")
+  @@map("order_items")
+}
+
+model Payment {
+  id                String    @id @default(uuid()) @db.Char(36)
+  orderId           String    @db.Char(36)
+  provider          String    @db.VarChar(255)
+  amount            Decimal   @db.Decimal(10, 2)
+  currency          String    @default("COP") @db.VarChar(10)
+  status            String    @default("PENDING") @db.VarChar(255)
+  paymentSessionId  String?   @db.VarChar(255)
+  paymentUrl        String?   @db.Text
+  externalReference String?   @db.VarChar(255)
+  rawResponse       String?   @db.LongText
+  webhookData       String?   @db.LongText
+  created_at        DateTime? @db.Timestamp(0)
+  updated_at        DateTime? @updatedAt @db.Timestamp(0)
+  order             Order     @relation(fields: [orderId], references: [id], map: "payments_orderid_foreign")
+
+  @@index([orderId], map: "payments_orderid_foreign")
+  @@map("payments")
+}
+
+model PaymentLog {
+  id            String    @id @default(uuid()) @db.Char(36)
+  orderId       String    @db.Char(36)
+  invoiceNumber String?   @db.VarChar(255)
+  transactionId String?   @db.VarChar(255)
+  status        String    @db.VarChar(255)
+  paymentMethod String?   @db.VarChar(255)
+  amount        Decimal?  @db.Decimal(10, 2)
+  rawResponse   String?   @db.LongText
+  created_at    DateTime? @db.Timestamp(0)
+  updated_at    DateTime? @db.Timestamp(0)
+
+  @@index([orderId], map: "payment_logs_orderid_foreign")
+  @@map("payment_logs")
+}
+
+model SocialMedia {
+  id         String    @id @default(uuid()) @db.Char(36)
+  name       String    @db.VarChar(255)
+  url        String    @db.VarChar(255)
+  label      String?   @db.VarChar(255)
+  isActive   Boolean   @default(true)
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @updatedAt @db.Timestamp(0)
+
+  @@map("social_media")
+}
+
+model delivery_evidences {
+  id         String    @id @default(uuid()) @db.Char(36)
+  orderId    String    @db.Char(36)
+  imageUrl   String    @db.VarChar(255)
+  type       String    @db.VarChar(255)
+  latitude   Decimal?  @db.Decimal(10, 7)
+  longitude  Decimal?  @db.Decimal(10, 7)
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+
+  order      Order     @relation(fields: [orderId], references: [id], onDelete: Cascade, map: "delivery_evidences_orderid_foreign")
+
+  @@index([orderId], map: "delivery_evidences_orderid_index")
+}
+
+model product_colors {
+  id         String    @id @default(uuid()) @db.Char(36)
+  productId  String    @db.Char(36)
+  name       String    @db.VarChar(255)
+  hex        String?   @db.VarChar(7)
+  stock      Int       @default(0)
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @updatedAt @db.Timestamp(0)
+  product    Product   @relation(fields: [productId], references: [id], onDelete: Cascade, map: "product_colors_productid_foreign")
+
+  @@index([productId], map: "product_colors_productid_foreign")
+}
+
+model cache {
+  key        String @id @db.VarChar(255)
+  value      String @db.MediumText
+  expiration BigInt
+
+  @@index([expiration], map: "cache_expiration_index")
+}
+
+model cache_locks {
+  key        String @id @db.VarChar(255)
+  owner      String @db.VarChar(255)
+  expiration BigInt
+
+  @@index([expiration], map: "cache_locks_expiration_index")
+}
+
+model customers {
+  id           String    @id @db.Char(36)
+  name         String    @db.VarChar(255)
+  email        String    @unique(map: "customers_email_unique") @db.VarChar(255)
+  password     String    @db.VarChar(255)
+  phone        String?   @db.VarChar(255)
+  street       String?   @db.VarChar(255)
+  neighborhood String?   @db.VarChar(255)
+  city         String?   @db.VarChar(255)
+  department   String?   @db.VarChar(255)
+  isActive     Boolean   @default(true)
+  created_at   DateTime? @db.Timestamp(0)
+  updated_at   DateTime? @db.Timestamp(0)
+  orders       Order[]
+}
+
+model failed_jobs {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  uuid       String   @unique(map: "failed_jobs_uuid_unique") @db.VarChar(255)
+  connection String   @db.Text
+  queue      String   @db.Text
+  payload    String   @db.LongText
+  exception  String   @db.LongText
+  failed_at  DateTime @default(now()) @db.Timestamp(0)
+}
+
+model job_batches {
+  id             String  @id @db.VarChar(255)
+  name           String  @db.VarChar(255)
+  total_jobs     Int
+  pending_jobs   Int
+  failed_jobs    Int
+  failed_job_ids String  @db.LongText
+  options        String? @db.MediumText
+  cancelled_at   Int?
+  created_at     Int
+  finished_at    Int?
+}
+
+model jobs {
+  id           BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  queue        String @db.VarChar(255)
+  payload      String @db.LongText
+  attempts     Int    @db.UnsignedTinyInt
+  reserved_at  Int?   @db.UnsignedInt
+  available_at Int    @db.UnsignedInt
+  created_at   Int    @db.UnsignedInt
+
+  @@index([queue], map: "jobs_queue_index")
+}
+
+model migrations {
+  id        Int    @id @default(autoincrement()) @db.UnsignedInt
+  migration String @db.VarChar(255)
+  batch     Int
+}
+
+model personal_access_tokens {
+  id             BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  tokenable_type String    @db.VarChar(255)
+  tokenable_id   String    @db.VarChar(36)
+  name           String    @db.Text
+  token          String    @unique(map: "personal_access_tokens_token_unique") @db.VarChar(64)
+  abilities      String?   @db.Text
+  last_used_at   DateTime? @db.Timestamp(0)
+  expires_at     DateTime? @db.Timestamp(0)
+  created_at     DateTime? @db.Timestamp(0)
+  updated_at     DateTime? @db.Timestamp(0)
+
+  @@index([expires_at], map: "personal_access_tokens_expires_at_index")
+  @@index([tokenable_type, tokenable_id], map: "personal_access_tokens_tokenable_type_tokenable_id_index")
+}
+
+model addresses {
+  id           String    @id @db.Char(36)
+  customer_id  String    @db.Char(36)
+  name         String    @db.VarChar(255)
+  phone        String    @db.VarChar(20)
+  street       String    @db.VarChar(255)
+  neighborhood String?   @db.VarChar(255)
+  city_id      String    @db.Char(36)
+  reference    String?   @db.Text
+  latitude     Decimal?  @db.Decimal(10, 7)
+  longitude    Decimal?  @db.Decimal(10, 7)
+  is_default   Boolean   @default(false)
+  created_at   DateTime? @db.Timestamp(0)
+  updated_at   DateTime? @db.Timestamp(0)
+
+  @@index([city_id], map: "addresses_city_id_foreign")
+  @@index([customer_id], map: "addresses_customer_id_index")
+}
+
+model cities {
+  id            String @id @db.Char(36)
+  name          String @db.VarChar(255)
+  department_id String @db.Char(36)
+  indicativo    String @db.VarChar(5)
+
+  @@unique([name, department_id], map: "cities_name_department_id_unique")
+  @@index([department_id], map: "cities_department_id_foreign")
+}
+
+model departments {
+  id         String  @id @db.Char(36)
+  name       String  @unique(map: "departments_name_unique") @db.VarChar(255)
+  indicativo String  @unique(map: "departments_indicativo_unique") @db.VarChar(5)
+  isActive   Boolean @default(true)
+}

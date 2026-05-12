@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022"
+    ],
+    "module": "CommonJS", // ⚠️ Express y multer funcionan mejor con CJS
+    "moduleResolution": "Node",
+    "rootDir": "src",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "baseUrl": "src",
+    "paths": {
+      "@controllers/*": [
+        "App/controllers/*"
+      ],
+      "@utils/*": [
+        "utils/*"
+      ],
+      "@routes/*": [
+        "App/routes/*"
+      ],
+      "@generated/*": [
+        "generated/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ], // compilar solo src
+  "exclude": [
+    "node_modules",
+    "dist"
+  ] // evitar recompilar basura
+}

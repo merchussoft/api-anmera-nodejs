@@ -1,0 +1,6 @@
+
+> anmerastore-api@1.0.0 build
+> tsc
+
+src/App/routes/delivery.routes.ts(4,10): error TS2305: Module '"../../middlewares/upload.middleware"' has no exported member 'uploadEvidence'.
+src/services/dashboard.service.ts(154,13): error TS2353: Object literal may only specify known properties, and 'totalOrders' does not exist in type 'DashboardStats'.
