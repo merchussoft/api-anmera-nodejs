@@ -13,7 +13,7 @@ class ProductController {
             const filters: ProductFilters = {};
             const categoryFilter = (category || categoryId) as string;
 
-            if (categoryFilter) filters.category = categoryFilter; 
+            if (categoryFilter) filters.category = categoryFilter;
             if (search) filters.search = search as string;
             if (minPrice) filters.minPrice = parseInt(minPrice as string);
             if (maxPrice) filters.maxPrice = parseInt(maxPrice as string);
@@ -120,6 +120,8 @@ class ProductController {
     deleteImage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { url } = req.body;
+
+            console.log('url', url);
 
             if (!url) {
                 res.status(400).json({ success: false, message: 'No image URL provided' });

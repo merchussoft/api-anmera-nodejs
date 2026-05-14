@@ -16,7 +16,8 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
     // Error de registro único duplicado
     if (err instanceof PrismaClientKnownRequestError) {
         if (err.code === 'P2002') {
-            const field = (err.meta?.target as string[])?.join(', ') || 'field';
+            const target = err.meta?.target;
+            const field = Array.isArray(target) ? target.join(', ') : (typeof target === 'string' ? target : 'field');
             res.status(400).json(errorResponse(`${field} already exists`, 400));
             return;
         }
