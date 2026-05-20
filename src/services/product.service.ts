@@ -175,10 +175,10 @@ class ProductService {
         try {
             const { colors, product_colors, id, created_at, updated_at, category, ...productData } = data;
 
-            // Normalize categoryId - if empty string, set to null
-            if (productData.categoryId === '') {
-                productData.categoryId = null;
-            }
+            // Normalize empty strings to null
+            if (productData.categoryId === '') productData.categoryId = null;
+            if (productData.barcode === '') productData.barcode = null;
+            if (productData.reference === '') productData.reference = null;
 
             // Note: We DON'T JSON.stringify images/sizes here because Prisma handles Json types with objects/arrays
             // If they are already strings, we keep them as is. If they are arrays, Prisma will save them as JSON arrays.
@@ -222,6 +222,11 @@ class ProductService {
 
             // Note: Don't stringify Json fields for Prisma
             const payloadColors = product_colors?.create || colors || [];
+
+            // Normalize empty strings to null
+            if (productData.categoryId === '') productData.categoryId = null;
+            if (productData.barcode === '') productData.barcode = null;
+            if (productData.reference === '') productData.reference = null;
 
             // Perform update in a transaction to handle colors
             const product = await prisma.$transaction(async (tx) => {
